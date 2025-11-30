@@ -4,7 +4,9 @@
 # Status: Autonomous Tool Evolution | Code Lineage Tracking | Fractal Memory v2
 
 import os
+import sys
 import textwrap
+from datetime import datetime
 import networkx as nx
 import pickle
 from typing import Dict, Callable, Optional, List, Set
@@ -13,7 +15,11 @@ from hashlib import md5
 import matplotlib.pyplot as plt
 
 # --- CONFIGURATION ---
-API_KEY = os.getenv("OPENAI_API_KEY") or exit("❌ OPENAI_API_KEY not set")
+API_KEY = os.getenv("OPENAI_API_KEY")
+if not API_KEY:
+    print("❌ OPENAI_API_KEY not set", file=sys.stderr)
+    if __name__ == "__main__":
+        sys.exit(1)
 MODEL_ID = "gpt-4o"
 CACHE_PATH = "rtga_cache.pkl"
 
@@ -285,7 +291,8 @@ class RecursiveBuilder:
         # Node classification
         tool_nodes = [n for n in self.memory.graph.nodes if self.memory.graph.nodes[n].get('type') == 'tool']
         tag_nodes = [n for n in self.memory.graph.nodes if self.memory.graph.nodes[n].get('type') == 'category']
-        chimera_nodes = [n for n in tool_nodes if "chimera" in self.memory.graph.nodes[n].get('tags', [])]
+        # Check if tool has 'chimera' tag by looking at connected category nodes
+        chimera_nodes = [n for n in tool_nodes if self.memory.graph.has_node("chimera") and self.memory.graph.has_edge("chimera", n)]
         base_nodes = [n for n in tool_nodes if n not in chimera_nodes]
 
         # Draw layers
@@ -326,7 +333,7 @@ class RecursiveBuilder:
 # --- MAIN ENTRYPOINT ---
 if __name__ == "__main__":
     print(f"\n{ConsoleStyle.BOLD}=== MASSIVE MAGNETICS AGENT v1.2.0 — CHIMERA PROTOCOL ==={ConsoleStyle.RESET}")
-    print(f"   Fractal Memory | Hebbian Recall | Code Lineage | {__import__('datetime').datetime.now().strftime('%B %d, %Y')}")
+    print(f"   Fractal Memory | Hebbian Recall | Code Lineage | {datetime.now().strftime('%B %d, %Y')}")
 
     bot = RecursiveBuilder()
 
