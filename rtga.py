@@ -186,7 +186,10 @@ class RecursiveBuilder:
         if cached_name:
             ConsoleStyle.log("MEMORY", f"Recall Success — {cached_name} [Fractal Match]", ConsoleStyle.GREEN)
             ConsoleStyle.log("EXECUTOR", f"Running {cached_name}()...", ConsoleStyle.CYAN)
-            self.memory.tools[cached_name]()
+            try:
+                self.memory.tools[cached_name]()
+            except Exception as e:
+                ConsoleStyle.log("ERROR", f"Cached tool execution failed: {e}", ConsoleStyle.RED)
             return
 
         ConsoleStyle.log("CORTEX", "Generating new tool...", ConsoleStyle.YELLOW)
@@ -257,8 +260,8 @@ class RecursiveBuilder:
             chimera_func = self._unsafe_compile(clean_code)
             chimera_name = chimera_func.__name__
 
-            # Inherit parent tags + add composite ontology
-            parent_tags = set(self.memory.graph.neighbors(tool_a_name)) | set(self.memory.graph.neighbors(tool_b_name))
+            # Inherit parent tags + add composite ontology (using predecessors for directed graphs)
+            parent_tags = set(self.memory.graph.predecessors(tool_a_name)) | set(self.memory.graph.predecessors(tool_b_name))
             parent_tags = {t for t in parent_tags if self.memory.graph.nodes[t].get('type') == 'category'}
 
             self.memory.add_tool(
